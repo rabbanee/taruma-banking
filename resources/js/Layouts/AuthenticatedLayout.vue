@@ -46,6 +46,12 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     Dashboard
                                 </NavLink>
+                                <NavLink
+                                    :href="route('m-payment.index')"
+                                    :active="route().current('m-payment.index')"
+                                >
+                                    M-Payment
+                                </NavLink>
                             </div>
                         </div>
 

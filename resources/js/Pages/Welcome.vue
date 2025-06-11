@@ -1,5 +1,6 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3';
+import { usePage } from '@inertiajs/vue3';
 
 defineProps({
     canLogin: {
@@ -11,6 +12,10 @@ defineProps({
         default: false,
     },
 });
+
+const user = usePage().props.auth.user;
+
+console.log(user);
 </script>
 
 <template>
@@ -24,7 +29,7 @@ defineProps({
         >
             <div>
                 <Link
-                    v-if="$page.props.auth.user"
+                    v-if="user"
                     :href="route('dashboard')"
                     class="self-start rounded-md border border-gray-600 px-4 py-2 transition hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
@@ -33,14 +38,14 @@ defineProps({
             </div>
             <div>
                 <Link
-                    v-if="canLogin"
+                    v-if="!user && canLogin"
                     :href="route('login')"
                     class="mr-2 rounded-md border border-gray-600 px-4 py-2 transition hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
-                    Login
+                    Login {{ user }}
                 </Link>
                 <Link
-                    v-if="canRegister"
+                    v-if="!user && canRegister"
                     :href="route('register')"
                     class="rounded-md border border-gray-600 px-4 py-2 transition hover:bg-gray-200 dark:hover:bg-gray-700"
                 >
@@ -71,28 +76,11 @@ defineProps({
                 "
             >
                 <img
-                    src="../../../public/assets/img/taruma-banking-logo.png"
+                    src="../../../public/assets/img/Taruma_banking_logo.png"
                     alt="Taruma Banking Logo"
-                    style="height: 60px; width: auto; object-fit: contain"
+                    style="height: 160px; width: auto; object-fit: contain"
                 />
-                <span
-                    style="
-                        font-family:
-                            'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                        font-weight: 700;
-                        font-size: 1.5rem;
-                        color: #2f855a;
-                    "
-                >
-                    Taruma Banking
-                </span>
             </div>
-
-            <!-- <img
-                src="https://cdn-icons-png.flaticon.com/512/2038/2038854.png"
-                alt="Mobile Banking Illustration"
-                class="mx-auto mb-8 h-40 w-40"
-            /> -->
         </main>
 
         <footer

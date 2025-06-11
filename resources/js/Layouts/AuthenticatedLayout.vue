@@ -25,7 +25,7 @@ const showingNavigationDropdown = ref(false);
                                         class="block h-9 w-auto fill-current text-gray-800"
                                     /> -->
                                     <img
-                                        src="../../../public/assets/img/taruma-banking-logo.png"
+                                        src="../../../public/assets/img/Taruma_banking_logo.png"
                                         alt="Taruma Banking Logo"
                                         style="
                                             height: 60px;

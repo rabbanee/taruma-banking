@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\MyBalanceController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -21,6 +22,11 @@ Route::get('/dashboard', function () {
 Route::get('/m-payment', function () {
     return Inertia::render('Mpayment/Index');
 })->middleware(['auth', 'verified'])->name('m-payment.index');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/my-balance', [MyBalanceController::class, 'show'])->name('my-balance');
+});
+
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

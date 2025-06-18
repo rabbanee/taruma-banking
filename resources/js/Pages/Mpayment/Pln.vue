@@ -167,6 +167,11 @@ const handleSubmit = async () => {
     }
 };
 
+//------- Token berubah jadi (-)
+const formatToken = (token) => {
+    return token?.replace(/(.{4})/g, '$1-').replace(/-$/, '') || '';
+};
+
 // Auto-focus input token saat komponen dimuat
 onMounted(() => {
     if (tokenInput.value) {
@@ -531,13 +536,6 @@ onMounted(() => {
         </div>
     </AuthenticatedLayout>
 </template>
-
-// --- Pengubah angka token (-) ------
-<script>
-function formatToken(token) {
-    return token?.replace(/(.{4})/g, '$1-').replace(/-$/, '') || '';
-}
-</script>
 
 <style scoped>
 .animate-slide-down {

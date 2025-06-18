@@ -34,6 +34,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/pln/purchase', [MobilePaymentController::class, 'purchasePln'])->name('pln.purchase');
     });
 
+    Route::prefix('/m-payment')->name('/m-payment.')->group(function () {
+        Route::get('/air', [MobilePaymentController::class, 'air'])->name('air');
+
+    });
+
 });
 
 

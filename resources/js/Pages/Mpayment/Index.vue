@@ -4,14 +4,8 @@ import { Head, Link } from '@inertiajs/vue3';
 
 const items = [
     { label: 'PLN Pascabayar', route: '/m-payment/pln', openInNewTab: true },
+    { label: 'Air (PDAM)', route: '/m-payment/air', openInNewTab: true },
 ];
-
-const handleItemClick = (item, event) => {
-    if (item.openInNewTab) {
-        event.preventDefault();
-        window.open(item.route, '_blank');
-    }
-};
 </script>
 
 <template>
@@ -26,7 +20,7 @@ const handleItemClick = (item, event) => {
                     v-for="(item, index) in items"
                     :key="index"
                     :href="item.route"
-                    :target="item.openInNewTab ? '_blank' : '_self'"
+                    :target="item.openInNewTab"
                     class="flex items-center justify-between px-4 py-4 transition-colors duration-200 hover:bg-gray-50"
                     @click="handleItemClick(item, $event)"
                 >

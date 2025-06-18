@@ -24,23 +24,20 @@ Route::get('/m-payment', function () {
     return Inertia::render('Mpayment/Index');
 })->middleware(['auth', 'verified'])->name('m-payment.index');
 
-    
-
 Route::middleware(['auth', 'verified'])->group(function () {
     
-    // M-Payment Web Routes (untuk halaman)
-    Route::prefix('/m-payment')->name('/m-payment.')->group(function () {
+    Route::prefix('m-payment')->name('m-payment.')->group(function () {
+        // Route PLN
         Route::get('/pln', [MobilePaymentController::class, 'pln'])->name('pln');
         Route::post('/pln/purchase', [MobilePaymentController::class, 'purchasePln'])->name('pln.purchase');
-    });
-
-    Route::prefix('/m-payment')->name('/m-payment.')->group(function () {
+        
+        // Route PDAM (Air)
         Route::get('/air', [MobilePaymentController::class, 'air'])->name('air');
-
+        Route::post('/air/purchase', [MobilePaymentController::class, 'purchaseAir'])->name('air.purchase');
+        Route::post('/m-payment/air/purchase', [MobilepaymentController::class, 'purchaseAir'])->name('m-payment.air.purchase');
     });
 
 });
-
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -49,5 +46,3 @@ Route::middleware('auth')->group(function () {
 });
 
 require __DIR__.'/auth.php';
-
-?>

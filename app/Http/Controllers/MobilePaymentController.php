@@ -7,6 +7,8 @@ use App\Models\MobilePayment;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use App\Models\PdamTransaction;
+use Illuminate\Support\Facades\Redirect;
 
 class MobilePaymentController extends Controller
 {
@@ -61,7 +63,7 @@ class MobilePaymentController extends Controller
      public function purchasePln(Request $request)
     {
         $validated = $request->validate([
-            'token_number' => 'required|digits:12',
+            'token_number' => 'required|string',
             'amount' => 'required|integer|min:20000'
         ]);
 
@@ -78,9 +80,13 @@ class MobilePaymentController extends Controller
                 'amount' => $validated['amount'],
                 'status' => 'pending',
                 'transaction_id' => $transactionId,
-                'token_number' => $validated['token_number'],
+                'customer_number' => $validated['token_number'],
+                'metadata' => [
+                    'token_number' => $validated['token_number'],
+                    'error_message' => null,
+                ]
                 
-                
+                 
             ]);
 
             // Simulate PLN API call
@@ -93,8 +99,6 @@ class MobilePaymentController extends Controller
                     'pln_token_1' => $plnResult['token1'],
                     'kwh_amount' => $plnResult['kwh'],
                 ]);
-
-                DB::commit();
 
                 return response()->json([
                     'success' => true,
@@ -181,9 +185,216 @@ class MobilePaymentController extends Controller
     // Akhir Halaman PLN (Pascabayar)
 
     // Halaman Air (Pascabayar)
-    
+   public function air()
+    {
+        // Data wilayah PDAM untuk dropdown
+        $pdamRegions = [
+            [
+                'id' => 'jabodetabek',
+                'name' => 'Jabodetabek',
+                'districts' => [
+                    ['code' => 'JKT01', 'name' => 'PDAM Jaya - Jakarta Pusat'],
+                    ['code' => 'JKT02', 'name' => 'PDAM Jaya - Jakarta Barat'],
+                    ['code' => 'JKT03', 'name' => 'PDAM Jaya - Jakarta Selatan'],
+                    ['code' => 'JKT04', 'name' => 'PDAM Jaya - Jakarta Timur'],
+                    ['code' => 'JKT05', 'name' => 'PDAM Jaya - Jakarta Utara'],
+                    ['code' => 'DPK01', 'name' => 'PDAM Kota Depok'],
+                    ['code' => 'BGR01', 'name' => 'PDAM Kota Bogor'],
+                    ['code' => 'TGR01', 'name' => 'PDAM Kab. Tangerang'],
+                ]
 
+            ],
+            
+           [
+                'id' => 'jabar',
+            'name' => 'Jawa Barat',
+            'districts' => [
+                ['code' => 'BDG01', 'name' => 'PDAM Kota Bandung'],
+                ['code' => 'CRB01', 'name' => 'PDAM Kota Cirebon'],
+                ['code' => 'TSK01', 'name' => 'PDAM Kota Tasikmalaya'],
+                ['code' => 'BJR01', 'name' => 'PDAM Kota Banjar'],
+            ]
+                
+            ],
 
+            [
+                'id' => 'jateng',
+            'name' => 'Jawa Tengah',
+            'districts' => [
+            ['code'=> 'SMG01', 'name' => 'PDAM Kota Semarang'],
+            ['code'=> 'SRG01', 'name' => 'PDAM Kota Surakarta'],
+            ['code'=> 'PWT01', 'name' => 'PDAM Kota Purwokerto'],
+            ['code'=> 'TGL01', 'name' => 'PDAM Kota Tegal' ],
 
+            ]
+
+            ],
+             
+            [
+            'id' => 'jatim',
+            'name' => 'Jawa Timur',
+            'districts' => [
+                ['code' => 'SBY01', 'name' => 'PDAM Surya Sembada - Surabaya'],
+                ['code' => 'MLG01', 'name' => 'PDAM Kota Malang'],
+                ['code' => 'JBR01', 'name' => 'PDAM Kota Jember'],
+                ['code' => 'MJK01', 'name' => 'PDAM Kota Mojokerto'],
+            ]
+             
+            ],
+
+            [
+            'id' => 'bali',
+            'name' => 'Bali',
+            'districts'=>[
+                ['code' => 'DPS01', 'name' => 'PDAM Denpasar'],
+                ['code' => 'BAD01', 'name' => 'PDAM Kab. Badung'],
+                ['code' => 'GIY01', 'name' => 'PDAM Kab. Gianyar'],
+            ]
+
+            ],
+
+            [
+                'id' => 'NTB',
+                'name' => 'Nusa Tenggara Barat',
+                'districts' => [
+                    ['code' => 'NTB01', 'name' => 'PDAM Kota Mataram'],
+                    ['code' => 'NTB02', 'name' => 'PDAM Kota Sumbawa'],
+                    ['code' => 'NTB03', 'name' => 'PDAM Kota Lombok'],
+                    ['code' => 'NTB04', 'name' => 'PDAM Kota Bima'],
+                ]
+                ],
+
+            [
+                'id' =>'DIY',
+                'name' => 'DI Yogyakarta',
+                'districts' => [
+                    ['code' => 'YOG01', 'name' => 'PDAM Kota Yogyakarta'],
+                    ['code' => 'YOG02', 'name' => 'PDAM Kota Sleman'],
+                    ['code' => 'YOG03', 'name' => 'PDAM Kota Bantul'],
+                    ['code' => 'YOG04', 'name' => 'PDAM Kota Gunungkidul'],
+                ]
+            ]
+
+        ];
+
+        // Ambil transaksi terakhir untuk user
+        $recentTransactions = MobilePayment::where('user_id', Auth::id())
+            ->where('payment_type', 'pdam')
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
+
+        return inertia('Mpayment/Air', [
+            'user' => Auth::user(),
+            'pdamRegions' => $pdamRegions,
+            'recentTransactions' => $recentTransactions
+        ]);
+    }
+
+    public function purchaseAir(Request $request)
+    {
+        // Validasi sesuai field yang dikirim dari Vue
+        $validated = $request->validate([
+             'customer_number' => 'required|string',
+            'region' => 'required|string',
+    'district_code' => 'required|string',
+    'amount' => 'required|integer|min:20000',
+        ]);
+
+          DB::beginTransaction();
+      try{
+        // Dapatkan nama wilayah dan cabang
+        $districtName = $this->getDistrictName($validated['district_code']);
+        $regionName = $this->getRegionName($validated['region']);
+
+        $payment = MobilePayment::create([
+             'user_id' => Auth::id(),
+             'payment_type' => 'pdam',
+            'amount' => $validated['amount'],
+            'status' => 'success',
+           'transaction_id' => 'PDAM-' . now()->format('YmdHis'),
+            'customer_number' => $validated['customer_number'],
+            'paid_at' => now(),
+            'metadata' => [
+        'region_id' => $validated['region'],
+        'region_name' => $regionName,
+        'district_code' => $validated['district_code'],
+        'district_name' => $districtName,
+        ]
+        ]);
+
+          DB::commit();
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'transaction_id' => $payment->transaction_id,
+                'customer_number' => $payment->customer_number,
+                'amount' => $payment->amount,
+                'region' => $regionName,
+                'district_name' => $districtName,
+                'date' => $payment->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
+
+            ]
+
+            
+        ]);
+    } catch (\Exception $e) {
+    DB::rollBack(); 
+    return response()->json([
+        'success' => false,
+        'message' => 'Terjadi kesalahan saat menyimpan transaksi.',
+        'error' => $e->getMessage(), // TAMPILKAN DETAIL ERROR
+    ], 500);
 }
+      
+    }
 
+    private function getDistrictName($code)
+    {
+        $districts = [
+            'JKT01' => 'PDAM Jaya - Jakarta Pusat',
+            'JKT02' => 'PDAM Jaya - Jakarta Barat',
+            'JKT03' => 'PDAM Jaya - Jakarta Selatan',
+            'JKT04' => 'PDAM Jaya - Jakarta Timur',
+            'JKT05'=> 'PDAM Jaya - Jakarta Utara' ,
+            'DPK01' => 'PDAM Kota Depok',
+            'BGR01' => 'PDAM Kota Bogor',
+            'TGR01' => 'PDAM Kab. Tangerang',
+            'BDG01' =>  'PDAM Kota Bandung',
+            'CRB01' => 'PDAM Kota Cirebon' ,
+            'TSK01' => 'PDAM Kota Tasikmalaya',
+            'BJR01' => 'PDAM Kota Banjar',
+            'MLG01' => 'PDAM Kota Malang',
+            'JBR01' => 'PDAM Kota Jember',
+            'MJK01' => 'PDAM Kota Mojokerto',
+            'DPS01' => 'PDAM Denpasar',
+            'BAD01' => 'PDAM Kab. Badung',
+            'GIY01' => 'PDAM Kab. Gianyar',
+            'NTB01' => 'PDAM Kota Mataram',
+            'NTB02' => 'PDAM Kota Sumbawa',
+            'NTB03' => 'PDAM Kota Lombok',
+            'NTB04' => 'PDAM Kota Bima',
+            'YOG01' => 'PDAM Kota Yogyakarta',
+            'YOG02' => 'PDAM Kab. Sleman',
+            'YOG03' => 'PDAM Kab. Bantul',
+            'YOG04' => 'PDAM Kab. Gunung Kidul',
+
+
+        ];
+
+        return $districts[$code] ?? 'Cabang PDAM';
+    }
+
+    private function getRegionName($id)
+    {
+        $regions = [
+            'jabodetabek' => 'Jabodetabek',
+            'jabar' => 'Jawa Barat',
+            'jateng' => 'Jawa Tengah',
+            'jatim' => 'Jawa Timur',
+            'bali' => 'Bali',
+        ];
+
+        return $regions[$id] ?? 'Wilayah PDAM';
+    }
+}

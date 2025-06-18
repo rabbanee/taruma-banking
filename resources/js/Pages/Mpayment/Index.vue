@@ -3,9 +3,13 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 const items = [
-    { label: 'PLN Pascabayar', route: '/m-payment/pln', openInNewTab: true },
-    { label: 'Air (PDAM)', route: '/m-payment/air', openInNewTab: true },
+    { label: 'PLN Pascabayar', route: '/m-payment/pln' },
+    { label: 'Air (PDAM)', route: '/m-payment/air' },
 ];
+
+function handleItemClick(item) {
+    console.log('Item diklik:', item.label);
+}
 </script>
 
 <template>

@@ -6,8 +6,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('/m-payment', [MobilePaymentController::class, 'store']);
     Route::get('/m-payment/history', [MobilePaymentController::class, 'history']);
     Route::get('/m-payment/pln/history', [MobilePaymentController::class, 'plnHistory']);
-    Route::get('/air/cities', [MobilePaymentController::class, 'getCities']);
-    Route::post('/air/purchase', [MobilePaymentController::class, 'purchase']);
 
 
 });

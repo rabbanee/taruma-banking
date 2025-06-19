@@ -1,6 +1,6 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, router, usePage } from '@inertiajs/vue3';
 import { ref, computed, onMounted } from 'vue';
 import { debounce } from 'lodash';
 import html2canvas from 'html2canvas';
@@ -22,10 +22,7 @@ const downloadStrukAsImage = async () => {
 };
 
 //-------------------------------------------------------------------
-const props = defineProps({
-    user: Object,
-    recentTransactions: Array,
-});
+const { props } = usePage();
 
 // --- STATE REAKTIF ---
 const token = ref('');

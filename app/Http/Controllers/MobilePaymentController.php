@@ -33,10 +33,11 @@ class MobilePaymentController extends Controller
             ->get();
 
         return Inertia::render('Mpayment/Pln', [
-            'user' => Auth::user(),
-            'recentTransactions' => $recentTransactions
-            
-        ]);
+        'user' => Auth::user(),
+        'recentTransactions' => $recentTransactions,
+    ]);
+
+       
     }
     // POST /api/m-payment
     public function store(Request $request)
@@ -100,6 +101,8 @@ class MobilePaymentController extends Controller
                     'kwh_amount' => $plnResult['kwh'],
                 ]);
 
+                 DB::commit();
+
                 return response()->json([
                     'success' => true,
                     'message' => 'Pembelian berhasil!',
@@ -117,10 +120,11 @@ class MobilePaymentController extends Controller
 
                 DB::commit();
 
-                return response()->json([
+                 return response()->json([
                     'success' => false,
                     'message' => $plnResult['message']
                 ], 400);
+               
             }
 
         } catch (\Exception $e) {
@@ -174,6 +178,7 @@ class MobilePaymentController extends Controller
                 'kwh' => number_format($amount / 1500, 2), // Simulate kWh calculation
                 'message' => 'Success'
             ];
+          
         } else {
             return [
                 'success' => false,

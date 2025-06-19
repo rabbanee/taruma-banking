@@ -5,6 +5,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\MobilePaymentController;
+use App\Http\Controllers\BeneficiaryController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -34,6 +35,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/air', [MobilePaymentController::class, 'air'])->name('air');
         Route::post('/air/purchase', [MobilePaymentController::class, 'purchaseAir'])->name('air.purchase');
         Route::post('/m-payment/air/purchase', [MobilepaymentController::class, 'purchaseAir'])->name('m-payment.air.purchase');
+
+        // Route Transfer
+        Route::get('/transfer', [MobilePaymentController::class, 'transfer'])->name('transfer');
+    Route::post('/transfer/beneficiary', [MobilePaymentController::class, 'addBeneficiary'])->name('transfer.beneficiary');
+    Route::post('/transfer/store', [MobilePaymentController::class, 'storeTransfer'])->name('transfer.store');
+
+     
+
     });
 
 });

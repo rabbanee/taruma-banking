@@ -5,6 +5,7 @@ import { Head, Link } from '@inertiajs/vue3';
 const items = [
     { label: 'PLN Pascabayar', route: '/m-payment/pln' },
     { label: 'Air (PDAM)', route: '/m-payment/air' },
+    { label: 'T-Transfer', route: '/m-payment/transfer' },
 ];
 
 function handleItemClick(item) {

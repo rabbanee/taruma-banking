@@ -1,14 +1,14 @@
 <?php
 
 namespace App\Http\Controllers;
-
+use App\Models\PdamTransaction;
 use Illuminate\Http\Request;
 use App\Models\MobilePayment;
+use App\Models\Transfer;
+use App\Models\Beneficiary;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
-use App\Models\PdamTransaction;
-use Illuminate\Support\Facades\Redirect;
 
 class MobilePaymentController extends Controller
 {
@@ -61,16 +61,16 @@ class MobilePaymentController extends Controller
     }
 
     // 
-     public function purchasePln(Request $request)
+      public function purchasePln(Request $request)
     {
         $validated = $request->validate([
             'token_number' => 'required|string',
             'amount' => 'required|integer|min:20000'
         ]);
 
-        try {
-            DB::beginTransaction();
+        DB::beginTransaction();
 
+        try {
             // Generate transaction ID
             $transactionId = 'PLN' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
             
@@ -390,6 +390,28 @@ class MobilePaymentController extends Controller
         return $districts[$code] ?? 'Cabang PDAM';
     }
 
+    public function airApi(Request $request)
+{
+    $user = Auth::user();
+
+    $pdamRegions = [
+        ['code' => 'jkt-02', 'region_id' => 'jkt', 'name' => 'Jakarta Barat'],
+        ['code' => 'bdg-01', 'region_id' => 'bdg', 'name' => 'Cimahi'],
+        ['code' => 'sby-01', 'region_id' => 'sby', 'name' => 'Rungkut'],
+    ];
+
+    $recent = PdamTransaction::where('user_id', $user->id)
+        ->orderByDesc('created_at')
+        ->take(5)
+        ->get();
+
+    return response()->json([
+        'regions' => $pdamRegions,
+        'recentTransactions' => $recent,
+        'user' => $user,
+    ]);
+}
+
     private function getRegionName($id)
     {
         $regions = [
@@ -402,4 +424,58 @@ class MobilePaymentController extends Controller
 
         return $regions[$id] ?? 'Wilayah PDAM';
     }
+
+    // Akhir dari PDAM (Air)
+    
+    // Halaman Tf (World)
+    public function transfer()
+{
+    $user = Auth::user();
+
+    return Inertia::render('Mpayment/Transfer', [
+        'user' => $user,
+        'beneficiaries' => $user->beneficiaries,
+        'recentTransfers' => Transfer::with('beneficiary')
+            ->where('user_id', $user->id)
+            ->latest()
+            ->take(5)
+            ->get()
+    ]);
 }
+
+public function addBeneficiary(Request $request)
+{
+    $validated = $request->validate([
+        'account_name' => 'required|string',
+        'bank_name' => 'required|string',
+        'account_number' => 'required|string',
+    ]);
+
+    $beneficiary = Beneficiary::create([
+        'user_id' => Auth::id(),
+        ...$validated
+    ]);
+
+    return response()->json(['message' => 'Rekening berhasil disimpan.', 'beneficiary' => $beneficiary]);
+}
+
+public function storeTransfer(Request $request)
+{
+    $validated = $request->validate([
+        'beneficiary_id' => 'required|exists:beneficiaries,id',
+        'amount' => 'required|numeric|min:1',
+    ]);
+
+    $transfer = Transfer::create([
+        'user_id' => Auth::id(),
+        'beneficiary_id' => $validated['beneficiary_id'],
+        'amount' => $validated['amount'],
+        'transferred_at' => now(),
+    ]);
+
+    return response()->json(['message' => 'Transfer berhasil.', 'transfer' => $transfer]);
+}
+
+
+}
+

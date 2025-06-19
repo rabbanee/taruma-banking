@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\MobilePaymentController;
 use App\Http\Controllers\PaymentController;
+use App\Models\EWalletTransaction;
+use App\Http\Controllers\EWalletTransactionController;
+
+
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -35,6 +39,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/air', [MobilePaymentController::class, 'air'])->name('air');
         Route::post('/air/purchase', [MobilePaymentController::class, 'purchaseAir'])->name('air.purchase');
         Route::post('/m-payment/air/purchase', [MobilepaymentController::class, 'purchaseAir'])->name('m-payment.air.purchase');
+
+        // Route E-Wallet
+        Route::get('/ewallet', function () {
+        return Inertia::render('Mpayment/Ewallet');
+        })->name('ewallet');
+
     });
 
 });
@@ -44,5 +54,19 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+Route::get('/m-payment/ewallet', function () {
+    $recentEwalletTransactions = EWalletTransaction::where('user_id', auth()->id())
+        ->latest()
+        ->take(5)
+        ->get();
+
+    return Inertia::render('Mpayment/Ewallet', [
+        'user' => auth()->user(),
+        'recentTransactions' => $recentEwalletTransactions,
+    ]);
+})->middleware('auth');
+
+Route::post('/e-wallet/transfer', [EWalletTransactionController::class, 'store'])->name('ewallet.transfer');
 
 require __DIR__.'/auth.php';

@@ -14,7 +14,6 @@ class MyBalanceController extends Controller
         return Inertia::render('MyBalance', [
             'userName' => $user->name,
             'balance' => optional($user->balance)->current_balance ?? 0,
-            'catatan' => $user->balance ? null : 'Belum ada data saldo untuk user ini',
         ]);
     }
 }

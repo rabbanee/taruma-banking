@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\MyBalanceController;
+use App\Http\Controllers\MutationController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -27,6 +28,9 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/my-balance', [MyBalanceController::class, 'show'])->name('my-balance');
 });
 
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/my-balance/mutation', [MutationController::class, 'index'])->name('mutation.index');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

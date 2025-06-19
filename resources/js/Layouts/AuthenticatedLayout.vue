@@ -56,7 +56,7 @@ const showingNavigationDropdown = ref(false);
                                     :href="route('my-balance')"
                                     :active="route().current('my-balance')"
                                 >
-                                    My Balance
+                                    M-Info
                                 </NavLink>
                             </div>
                         </div>

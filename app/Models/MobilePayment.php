@@ -14,10 +14,22 @@ class MobilePayment extends Model
         'payment_type',
         'amount',
         'status',
+        'transaction_id',
+        'customer_number',
+        'metadata',
+        'pln_token_1',
+        'kwh_amount',
+        'error_message',
+        'paid_at',
     ];
+
+    protected $casts = [
+    'metadata' => 'array'
+];
 
     public function user()
     {
         return $this->belongsTo(User::class);
+
     }
 }

@@ -16,8 +16,6 @@ return new class extends Migration
             $table->string('transaction_id')->unique()->nullable()->after('id');
             $table->string('token_number', 12)->nullable()->after('payment_type');
             $table->string('pln_token_1', 20)->nullable()->after('amount');
-            $table->string('pln_token_2', 20)->nullable()->after('pln_token_1');
-            $table->decimal('kwh_amount', 8, 2)->nullable()->after('pln_token_2');
             $table->text('error_message')->nullable()->after('status');
             
             // Index untuk performance

@@ -3,10 +3,10 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 const items = [
+    { label: 'T-Transfer', route: '/mtransfer' },
     { label: 'PLN Pascabayar', route: '/m-payment/pln' },
     { label: 'Air (PDAM)', route: '/m-payment/air' },
-    { label: 'E-Wallet', route: '/m-payment/ewallet' }, 
-
+    { label: 'E-Wallet', route: '/m-payment/ewallet' },
 ];
 
 function handleItemClick(item) {
@@ -31,7 +31,7 @@ function handleItemClick(item) {
                     @click="handleItemClick(item, $event)"
                 >
                     <span class="font-medium">{{ item.label }}</span>
-                    <span class="text-blue-500">
+                    <span class="text-green-500">
                         {{ item.openInNewTab ? '➡️' : '➡️' }}
                     </span>
                 </Link>

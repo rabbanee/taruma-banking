@@ -255,7 +255,12 @@ const handleSubmit = async () => {
                 const errors = error.response.data.errors;
                 currentError.value = Object.values(errors)[0][0];
             } else {
-                currentError.value = 'Koneksi jaringan bermasalah';
+                if (error.response.data.message) {
+                    currentError.value = error.response.data.message;
+                } else {
+                    currentError.value = 'Koneksi jaringan bermasalah';
+                }
+
                 console.error(
                     'Payment error:',
                     error.response?.data || error.message,

@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class MobilePayment extends Model
 {
-        use HasFactory;
+    use HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -24,12 +24,11 @@ class MobilePayment extends Model
     ];
 
     protected $casts = [
-    'metadata' => 'array'
-];
+        'metadata' => 'array'
+    ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
-
     }
 }

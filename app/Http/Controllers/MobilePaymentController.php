@@ -19,7 +19,7 @@ class MobilePaymentController extends Controller
             'user' => Auth::user(),
             // 'someOtherData' => 'value',
         ]);
-      
+
     }
 
     // Halaman PLN Pascabayar
@@ -37,7 +37,7 @@ class MobilePaymentController extends Controller
         'recentTransactions' => $recentTransactions,
     ]);
 
-       
+
     }
     // POST /api/m-payment
     public function store(Request $request)
@@ -60,7 +60,7 @@ class MobilePaymentController extends Controller
         ]);
     }
 
-    // 
+    //
       public function purchasePln(Request $request)
     {
         $validated = $request->validate([
@@ -71,9 +71,19 @@ class MobilePaymentController extends Controller
         DB::beginTransaction();
 
         try {
+            $user = Auth::user();
+
+            if ($user->balance->current_balance < $validated['amount']) {
+                DB::commit();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo tidak mencukupi.'
+                ], 400);
+            }
+
             // Generate transaction ID
             $transactionId = 'PLN' . date('Ymd') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-            
+
             // Create payment record dengan field tambahan untuk PLN
             $payment = MobilePayment::create([
                 'user_id' => Auth::id() ?? 1,
@@ -86,14 +96,14 @@ class MobilePaymentController extends Controller
                     'token_number' => $validated['token_number'],
                     'error_message' => null,
                 ]
-                
-                 
             ]);
 
             // Simulate PLN API call
             $plnResult = $this->callPlnApi($validated['token_number'], $validated['amount']);
-            
+
             if ($plnResult['success']) {
+                $user->balance()->decrement('current_balance', $validated['amount']);
+                // $user->save();
                 // Update payment dengan token hasil
                 $payment->update([
                     'status' => 'success',
@@ -101,7 +111,7 @@ class MobilePaymentController extends Controller
                     'kwh_amount' => $plnResult['kwh'],
                 ]);
 
-                 DB::commit();
+                DB::commit();
 
                 return response()->json([
                     'success' => true,
@@ -124,7 +134,7 @@ class MobilePaymentController extends Controller
                     'success' => false,
                     'message' => $plnResult['message']
                 ], 400);
-               
+
             }
 
         } catch (\Exception $e) {
@@ -169,7 +179,7 @@ class MobilePaymentController extends Controller
     {
         // Simulate PLN API response (replace with real API integration)
         sleep(2); // Simulate API delay
-        
+
         // Mock successful response (85% success rate)
         if (rand(1, 100) <= 85) {
             return [
@@ -178,7 +188,7 @@ class MobilePaymentController extends Controller
                 'kwh' => number_format($amount / 1500, 2), // Simulate kWh calculation
                 'message' => 'Success'
             ];
-          
+
         } else {
             return [
                 'success' => false,
@@ -209,32 +219,30 @@ class MobilePaymentController extends Controller
                 ]
 
             ],
-            
+
            [
                 'id' => 'jabar',
-            'name' => 'Jawa Barat',
-            'districts' => [
-                ['code' => 'BDG01', 'name' => 'PDAM Kota Bandung'],
-                ['code' => 'CRB01', 'name' => 'PDAM Kota Cirebon'],
-                ['code' => 'TSK01', 'name' => 'PDAM Kota Tasikmalaya'],
-                ['code' => 'BJR01', 'name' => 'PDAM Kota Banjar'],
-            ]
-                
+                'name' => 'Jawa Barat',
+                'districts' => [
+                    ['code' => 'BDG01', 'name' => 'PDAM Kota Bandung'],
+                    ['code' => 'CRB01', 'name' => 'PDAM Kota Cirebon'],
+                    ['code' => 'TSK01', 'name' => 'PDAM Kota Tasikmalaya'],
+                    ['code' => 'BJR01', 'name' => 'PDAM Kota Banjar'],
+                ]
             ],
 
             [
                 'id' => 'jateng',
-            'name' => 'Jawa Tengah',
-            'districts' => [
-            ['code'=> 'SMG01', 'name' => 'PDAM Kota Semarang'],
-            ['code'=> 'SRG01', 'name' => 'PDAM Kota Surakarta'],
-            ['code'=> 'PWT01', 'name' => 'PDAM Kota Purwokerto'],
-            ['code'=> 'TGL01', 'name' => 'PDAM Kota Tegal' ],
-
-            ]
+                'name' => 'Jawa Tengah',
+                'districts' => [
+                    ['code'=> 'SMG01', 'name' => 'PDAM Kota Semarang'],
+                    ['code'=> 'SRG01', 'name' => 'PDAM Kota Surakarta'],
+                    ['code'=> 'PWT01', 'name' => 'PDAM Kota Purwokerto'],
+                    ['code'=> 'TGL01', 'name' => 'PDAM Kota Tegal' ],
+                ]
 
             ],
-             
+
             [
             'id' => 'jatim',
             'name' => 'Jawa Timur',
@@ -244,7 +252,7 @@ class MobilePaymentController extends Controller
                 ['code' => 'JBR01', 'name' => 'PDAM Kota Jember'],
                 ['code' => 'MJK01', 'name' => 'PDAM Kota Mojokerto'],
             ]
-             
+
             ],
 
             [
@@ -300,58 +308,63 @@ class MobilePaymentController extends Controller
     {
         // Validasi sesuai field yang dikirim dari Vue
         $validated = $request->validate([
-             'customer_number' => 'required|string',
+            'customer_number' => 'required|string',
             'region' => 'required|string',
-    'district_code' => 'required|string',
-    'amount' => 'required|integer|min:20000',
+            'district_code' => 'required|string',
+            'amount' => 'required|integer|min:20000',
         ]);
 
-          DB::beginTransaction();
-      try{
-        // Dapatkan nama wilayah dan cabang
-        $districtName = $this->getDistrictName($validated['district_code']);
-        $regionName = $this->getRegionName($validated['region']);
+        DB::beginTransaction();
+        try{
+            $user = Auth::user();
+            if ($user->balance->current_balance < $validated['amount']) {
+                DB::commit();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo tidak mencukupi.'
+                ], 400);
+            }
+            // Dapatkan nama wilayah dan cabang
+            $districtName = $this->getDistrictName($validated['district_code']);
+            $regionName = $this->getRegionName($validated['region']);
 
-        $payment = MobilePayment::create([
-             'user_id' => Auth::id(),
-             'payment_type' => 'pdam',
-            'amount' => $validated['amount'],
-            'status' => 'success',
-           'transaction_id' => 'PDAM-' . now()->format('YmdHis'),
-            'customer_number' => $validated['customer_number'],
-            'paid_at' => now(),
-            'metadata' => [
-        'region_id' => $validated['region'],
-        'region_name' => $regionName,
-        'district_code' => $validated['district_code'],
-        'district_name' => $districtName,
-        ]
-        ]);
+            $payment = MobilePayment::create([
+                'user_id' => Auth::id(),
+                'payment_type' => 'pdam',
+                'amount' => $validated['amount'],
+                'status' => 'success',
+                'transaction_id' => 'PDAM-' . now()->format('YmdHis'),
+                'customer_number' => $validated['customer_number'],
+                'paid_at' => now(),
+                'metadata' => [
+                    'region_id' => $validated['region'],
+                    'region_name' => $regionName,
+                    'district_code' => $validated['district_code'],
+                    'district_name' => $districtName,
+                ]
+            ]);
+            $user->balance()->decrement('current_balance', $validated['amount']);
+            DB::commit();
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'transaction_id' => $payment->transaction_id,
+                    'customer_number' => $payment->customer_number,
+                    'amount' => $payment->amount,
+                    'region' => $regionName,
+                    'district_name' => $districtName,
+                    'date' => $payment->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
+                ]
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan saat menyimpan transaksi.',
+                'error' => $e->getMessage(), // TAMPILKAN DETAIL ERROR
+            ], 500);
+        }
 
-          DB::commit();
-        return response()->json([
-            'success' => true,
-            'data' => [
-                'transaction_id' => $payment->transaction_id,
-                'customer_number' => $payment->customer_number,
-                'amount' => $payment->amount,
-                'region' => $regionName,
-                'district_name' => $districtName,
-                'date' => $payment->created_at->setTimezone('Asia/Jakarta')->format('d/m/Y H:i:s'),
-
-            ]
-
-            
-        ]);
-    } catch (\Exception $e) {
-    DB::rollBack(); 
-    return response()->json([
-        'success' => false,
-        'message' => 'Terjadi kesalahan saat menyimpan transaksi.',
-        'error' => $e->getMessage(), // TAMPILKAN DETAIL ERROR
-    ], 500);
-}
-      
     }
 
     private function getDistrictName($code)
@@ -426,7 +439,7 @@ class MobilePaymentController extends Controller
     }
 
     // Akhir dari PDAM (Air)
-    
+
     // Halaman Tf (World)
     public function transfer()
 {
@@ -478,4 +491,3 @@ public function storeTransfer(Request $request)
 
 
 }
-

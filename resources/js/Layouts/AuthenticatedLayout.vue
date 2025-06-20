@@ -58,6 +58,16 @@ const showingNavigationDropdown = ref(false);
                                 >
                                     M-Info
                                 </NavLink>
+                                <!-- <NavLink :href="'https://wa.me/6281234567890'">
+                                    Customer Service
+                                </NavLink> -->
+                                <a
+                                    href="https://wa.me/6281234567890"
+                                    target="_blank"
+                                    class="inline-flex items-center border-b-2 border-transparent px-1 pt-1 text-sm font-medium leading-5 text-gray-500 transition duration-150 ease-in-out hover:border-gray-300 hover:text-gray-700"
+                                >
+                                    Customer Service
+                                </a>
                             </div>
                         </div>
 

@@ -9,8 +9,11 @@ return new class extends Migration {
     {
         Schema::create('transfer_transactions', function (Blueprint $table) {
             $table->id();
+            // $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->foreignId('transfer_recipient_id')->constrained('transfer_recipients')->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->foreignId('recipient_id')->constrained('transfer_recipients')->onDelete('cascade');
+            $table->foreignId('recipient_user_id')->constrained('users')->onDelete('cascade');
+
             $table->unsignedBigInteger('amount');
             $table->timestamps();
         });

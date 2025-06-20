@@ -41,6 +41,7 @@ const saveRecipient = async () => {
     }
 
     try {
+        console.log('Account number:', accountNumber.value);
         await axios.post('/mtransfer/recipients', {
             name: name.value,
             account_number: accountNumber.value,

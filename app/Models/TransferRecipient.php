@@ -12,12 +12,20 @@ class TransferRecipient extends Model
     protected $fillable = [
         'user_id',
         'name',
-        'account_number',
+        'recipient_user_id',
     ];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-}
 
+
+    public function recipientUser()
+    {
+        return $this->belongsTo(User::class, 'recipient_user_id');
+    }
+
+
+
+}

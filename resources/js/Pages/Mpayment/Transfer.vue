@@ -39,6 +39,11 @@ const sendTransfer = async () => {
 
     const cleanAmount = parseInt(amount.value.replace(/\D/g, ''));
 
+    if (!selectedRecipient.value) {
+        error.value = 'Pilih rekening tujuan';
+        return;
+    }
+
     if (!selectedRecipient.value || !amount.value || cleanAmount < 20000) {
         error.value = 'Minimal transfer Rp 20.000';
         return;
@@ -46,7 +51,8 @@ const sendTransfer = async () => {
 
     try {
         await axios.post('/mtransfer/send', {
-            recipient_id: selectedRecipient.value.id,
+            transfer_recipient_id: selectedRecipient.value.id,
+            recipient_id: selectedRecipient.value.recipient_user_id,
             amount: cleanAmount,
         });
 
@@ -163,7 +169,10 @@ onMounted(() => {
                 <!-- Rekening Kita -->
                 <div class="mb-4 rounded border bg-gray-100 p-3 text-sm">
                     <p class="font-medium">Rekening Anda</p>
-                    <p>{{ myName }} - {{ myNumber }}</p>
+                    <p>
+                        {{ $page.props.auth.user.name }} -
+                        {{ $page.props.auth.user.account_number }}
+                    </p>
                 </div>
 
                 <!-- TOMBOL KIRIM -->
@@ -196,10 +205,13 @@ onMounted(() => {
                         :key="item.id"
                         class="mb-3 rounded border bg-white p-3 text-sm shadow-sm"
                     >
-                        <p><strong>Nama:</strong> {{ item.recipient.name }}</p>
+                        <p>
+                            <strong>Nama:</strong>
+                            {{ item.name }}
+                        </p>
                         <p>
                             <strong>Rekening:</strong>
-                            {{ item.recipient.account_number }}
+                            {{ item.account_number }}
                         </p>
                         <p>
                             <strong>Jumlah:</strong> Rp

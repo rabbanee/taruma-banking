@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TransferTransaction;
 use App\Models\InterbankTransaction;
 Use App\Models\BankRecipient;
+use App\Models\TransferRecipient;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
@@ -517,20 +518,33 @@ class MobilePaymentController extends Controller
 
     public function getRecipients()
     {
-        return response()->json(Auth::user()->transferRecipients);
+        return response()->json(
+            Auth::user()->transferRecipients->map(function ($recipient) {
+                return [
+                    'id' => $recipient->id,
+                    'recipient_user_id' => $recipient->recipient_user_id,
+                    'name' => $recipient->name,
+                    'account_number' => $recipient->recipientUser->account_number,
+                ];
+            })
+        );
     }
 
     public function storeRecipient(Request $request)
     {
         $request->validate([
             'name' => 'required|string',
-            'account_number' => ['required', 'digits_between:1,10', 'regex:/^\d+$/', 'unique:transfer_recipients,account_number', function ($attribute, $value, $fail) {
-                if (!User::where('account_number', $value)->exists()) {
-                    $fail('Nomor rekening tidak ditemukan.');
-                }
-            }],
+            'account_number' => ['required', 'digits_between:1,10', 'regex:/^\d+$/'],
         ]);
+
         $user = User::where('account_number', $request->account_number)->first();
+
+        if (!$user) {
+            return response()->json(['message' => 'Rekening tujuan tidak ditemukan'], 400);
+        } else if ($user->id == Auth::user()->id) {
+            return response()->json(['message' => 'Anda tidak dapat mengirim ke diri sendiri'], 400);
+        }
+
         $recipient = Auth::user()->transferRecipients()->create([
             'name' => $request->name,
             'recipient_user_id' => $user->id,
@@ -543,7 +557,8 @@ class MobilePaymentController extends Controller
     public function makeTransfer(Request $request)
     {
         $validated = $request->validate([
-            'recipient_id' => 'required|exists:transfer_recipients,id',
+            'transfer_recipient_id' => 'required|exists:transfer_recipients,id',
+            'recipient_id' => 'required|exists:transfer_recipients,recipient_user_id',
             'amount' => 'required|numeric|min:1000',
         ]);
 
@@ -560,15 +575,23 @@ class MobilePaymentController extends Controller
                 ], 400);
             }
 
-             $transfer = TransferTransaction::create([
+            $recipient = User::findOrFail($validated['recipient_id']);
+
+            $transfer = TransferTransaction::create([
+                'transfer_recipient_id' => $validated['transfer_recipient_id'],
                 'user_id' => $user->id,
-                'recipient_id' => $request->recipient_id,
-                'amount' => $request->amount,
+                'recipient_user_id' => $validated['recipient_id'],
+                'amount' => $validated['amount'],
             ]);
+
+            $user->balance()->decrement('current_balance', $validated['amount']);
+            $recipient->balance()->increment('current_balance', $validated['amount']);
+
             DB::commit();
             return response()->json($transfer);
         } catch (\Throwable $th) {
             DB::rollBack();
+            dd($th);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan sistem'
@@ -578,10 +601,20 @@ class MobilePaymentController extends Controller
 
     public function transactionHistory()
     {
-        $history = TransferTransaction::with('recipient')
+        $history = TransferTransaction::with('recipient', 'recipient.recipientUser')
             ->where('user_id', auth()->id())
             ->latest()
-            ->get();
+            ->get()
+            ->map(function ($transaction) {
+                // dd($transaction);
+                return [
+                    'id' => $transaction->id,
+                    'name' => $transaction->recipient->name ?? '',
+                    'amount' => $transaction->amount,
+                    'account_number' => $transaction->recipientUser->account_number ?? '',
+                    'created_at' => $transaction->created_at
+                ];
+            });
 
         return response()->json($history);
     }

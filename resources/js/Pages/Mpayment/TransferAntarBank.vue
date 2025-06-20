@@ -168,7 +168,10 @@ const handleAmountInput = () => {
                 <!-- Rekening Kita -->
                 <div class="mb-4 rounded border bg-gray-100 p-3 text-sm">
                     <p class="font-medium">Rekening Anda</p>
-                    <p>{{ myName }} - {{ myNumber }}</p>
+                    <p>
+                        {{ $page.props.auth.user.name }} -
+                        {{ $page.props.auth.user.account_number }}
+                    </p>
                 </div>
 
                 <!-- Ringkasan -->

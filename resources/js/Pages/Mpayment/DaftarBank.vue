@@ -25,6 +25,7 @@ const accountNumber = ref('');
 const success = ref('');
 const error = ref('');
 const recipients = ref([]);
+const isLoading = ref(false);
 
 const fetchBankRecipients = async () => {
     try {
@@ -38,9 +39,11 @@ const fetchBankRecipients = async () => {
 const saveBankRecipient = async () => {
     error.value = '';
     success.value = '';
+    isLoading.value = true;
 
     if (!selectedBank.value || !accountName.value || !accountNumber.value) {
         error.value = 'Semua field wajib diisi';
+        isLoading.value = false;
         return;
     }
 
@@ -56,8 +59,10 @@ const saveBankRecipient = async () => {
         accountName.value = '';
         accountNumber.value = '';
         await fetchBankRecipients();
+        isLoading.value = false;
     } catch (err) {
         error.value = err.response?.data?.message || 'Gagal menyimpan';
+        isLoading.value = false;
     }
 };
 
@@ -146,6 +151,7 @@ onMounted(() => {
                 <!-- Tombol Simpan -->
                 <button
                     @click="saveBankRecipient"
+                    :disabled="isLoading"
                     class="w-full rounded bg-green-600 py-2 text-white transition hover:bg-green-700"
                 >
                     Simpan Rekening Bank

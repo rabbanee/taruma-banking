@@ -582,6 +582,7 @@ class MobilePaymentController extends Controller
                 'user_id' => $user->id,
                 'recipient_user_id' => $validated['recipient_id'],
                 'amount' => $validated['amount'],
+                'status' => 'success'
             ]);
 
             $user->balance()->decrement('current_balance', $validated['amount']);
@@ -591,7 +592,6 @@ class MobilePaymentController extends Controller
             return response()->json($transfer);
         } catch (\Throwable $th) {
             DB::rollBack();
-            dd($th);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan sistem'
@@ -629,13 +629,18 @@ class MobilePaymentController extends Controller
 
     public function storeBankRecipient(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'bank_name' => 'required|string',
             'account_name' => 'required|string',
             'account_number' => 'required|string|max:20',
         ]);
 
-        return Auth::user()->bankRecipients()->create($request->all());
+        $validated['created_at'] = now();
+        $validated['updated_at'] = now();
+
+        $user = Auth::user()->bankRecipients()->create($validated);
+
+        return $user;
     }
 
     public function interbankHistory()
@@ -656,29 +661,45 @@ class MobilePaymentController extends Controller
 
     public function makeInterbankTransfer(Request $request)
     {
-        try {
-            $request->validate([
-                'bank_recipient_id' => 'required|exists:bank_recipients,id',
-                'amount' => 'required|numeric|min:10000',
-            ]);
+        $validated = $request->validate([
+            'bank_recipient_id' => 'required|exists:bank_recipients,id',
+            'amount' => 'required|numeric|min:10000',
+        ]);
 
-            $recipient = BankRecipient::findOrFail($request->bank_recipient_id);
+        DB::beginTransaction();
+
+        try {
+            $user = Auth::user();
+
+            if ($user->balance->current_balance < $validated['amount']) {
+                DB::commit();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo tidak mencukupi.'
+                ], 400);
+            }
+
+            $recipient = BankRecipient::findOrFail($validated['bank_recipient_id']);
 
             $bank_name = trim($recipient->bank_name);
             $fee = strcasecmp($bank_name, 'Taruma Bank') === 0
             ? 0
                 : round($request->amount * 0.03);
 
+            $user->balance()->decrement('current_balance', $validated['amount'] - $fee);
 
             $transfer = InterbankTransaction::create([
-                'user_id' => auth()->id(),
+                'user_id' => $user->id,
                 'bank_recipient_id' => $recipient->id,
                 'amount' => $request->amount,
                 'admin_fee' => $fee,
+                'status' => 'success'
             ]);
 
+            DB::commit();
             return response()->json(['transfer' => $transfer, 'fee' => $fee]);
         } catch (\Exception $e) {
+            DB::rollBack();
             return response()->json([
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
             ], 500);

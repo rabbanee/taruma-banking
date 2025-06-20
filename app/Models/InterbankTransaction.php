@@ -14,6 +14,7 @@ class InterbankTransaction extends Model
         'bank_recipient_id',
         'amount',
         'admin_fee',
+        'transaction_date',
     ];
 
     public function user()
@@ -22,8 +23,7 @@ class InterbankTransaction extends Model
     }
 
     public function bankRecipient()
-{
-    return $this->belongsTo(BankRecipient::class, 'bank_recipient_id');
+    {
+        return $this->belongsTo(BankRecipient::class, 'bank_recipient_id');
+    }
 }
-}
-

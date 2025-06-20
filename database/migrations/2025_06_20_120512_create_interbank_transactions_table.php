@@ -12,13 +12,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('interbank_transactions', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('user_id')->constrained()->onDelete('cascade');
-        $table->foreignId('bank_recipient_id')->constrained()->onDelete('cascade');
-        $table->integer('amount,12,2');
-        $table->integer('admin_fee,12,2')->default(0);
-        $table->timestamps();
-    });
+            $table->id();
+            $table->foreignId('bank_recipient_id')->constrained()->onDelete('cascade');
+            $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->decimal('amount', 12, 2);
+            $table->decimal('admin_fee', 12, 2)->default(0);
+             $table->string('status')->default('pending');
+            $table->timestamp('transaction_date')->default(now());
+            $table->timestamps();
+        });
     }
 
     /**

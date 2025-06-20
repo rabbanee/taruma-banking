@@ -83,7 +83,7 @@ const formattedBalance = computed(() => {
                 <div class="overflow-hidden bg-white shadow-sm sm:rounded-lg">
                     <div class="space-y-4 p-6 text-gray-900">
                         <p><strong>Time:</strong> {{ currentTime }}</p>
-                        <p><strong>User ID:</strong> {{ props.userName }}</p>
+                        <p><strong>Name :</strong> {{ props.userName }}</p>
 
                         <div>
                             <p class="text-3xl font-bold text-green-600">
@@ -107,7 +107,7 @@ const formattedBalance = computed(() => {
                             href="/my-balance/mutation"
                             class="block w-full rounded border border-gray-300 bg-transparent px-4 py-3 text-left font-semibold text-black hover:bg-gray-50"
                         >
-                            Check Mutation
+                            Cek Mutasi
                         </Link>
 
                         <button

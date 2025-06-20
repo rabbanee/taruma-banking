@@ -18,7 +18,10 @@ const filteredMutation = computed(() => {
         const start = startDate.value ? new Date(startDate.value) : null;
         const end = endDate.value ? new Date(endDate.value) : null;
 
-        return (!start || date >= start) && (!end || date <= end);
+        return (
+            (!start || date >= start) &&
+            (!end || date <= end.setDate(end.getDate() + 1))
+        );
     });
 });
 </script>

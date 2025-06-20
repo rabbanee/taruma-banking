@@ -18,7 +18,7 @@ class MutationController extends Controller
             ->get();
 
         $ewallet = EWalletTransaction::where('user_id', $userId)
-            ->selectRaw("'E-Wallet: ' || wallet_type as payment_type, amount, status, created_at")
+            ->selectRaw("CONCAT('E-Wallet: ', wallet_type) as payment_type, amount, status, created_at")
             ->get();
 
         $merged = $mobile->concat($ewallet)

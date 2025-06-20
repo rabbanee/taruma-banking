@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\TransferTransaction;
 use App\Models\InterbankTransaction;
 Use App\Models\BankRecipient;
+use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class MobilePaymentController extends Controller
@@ -185,13 +186,19 @@ class MobilePaymentController extends Controller
         sleep(2); // Simulate API delay
 
         // Mock successful response (85% success rate)
+        return [
+            'success' => true,
+            'token1' => $this->generateTokenNumber(20),
+            'kwh' => number_format($amount / 1500, 2), // Simulate kWh calculation
+            'message' => 'Success'
+        ];
         if (rand(1, 100) <= 85) {
-            return [
-                'success' => true,
-                'token1' => $this->generateTokenNumber(20),
-                'kwh' => number_format($amount / 1500, 2), // Simulate kWh calculation
-                'message' => 'Success'
-            ];
+            // return [
+            //     'success' => true,
+            //     'token1' => $this->generateTokenNumber(20),
+            //     'kwh' => number_format($amount / 1500, 2), // Simulate kWh calculation
+            //     'message' => 'Success'
+            // ];
 
         } else {
             return [
@@ -517,12 +524,17 @@ class MobilePaymentController extends Controller
     {
         $request->validate([
             'name' => 'required|string',
-            'account_number' => 'required|digits_between:1,10|regex:/^\d+$/|unique:transfer_recipients,account_number',
+            'account_number' => ['required', 'digits_between:1,10', 'regex:/^\d+$/', 'unique:transfer_recipients,account_number', function ($attribute, $value, $fail) {
+                if (!User::where('account_number', $value)->exists()) {
+                    $fail('Nomor rekening tidak ditemukan.');
+                }
+            }],
         ]);
-
+        $user = User::where('account_number', $request->account_number)->first();
         $recipient = Auth::user()->transferRecipients()->create([
             'name' => $request->name,
-            'account_number' => $request->account_number,
+            'recipient_user_id' => $user->id,
+            // 'user_id' => Auth::user()->id,
         ]);
 
         return response()->json($recipient);
@@ -530,18 +542,38 @@ class MobilePaymentController extends Controller
 
     public function makeTransfer(Request $request)
     {
-        $request->validate([
+        $validated = $request->validate([
             'recipient_id' => 'required|exists:transfer_recipients,id',
             'amount' => 'required|numeric|min:1000',
         ]);
 
-        $transfer = TransferTransaction::create([
-            'user_id' => auth()->id(),
-            'recipient_id' => $request->recipient_id,
-            'amount' => $request->amount,
-        ]);
+        DB::beginTransaction();
 
-        return response()->json($transfer);
+        try {
+            $user = Auth::user();
+
+            if ($user->balance->current_balance < $validated['amount']) {
+                DB::commit();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Saldo tidak mencukupi.'
+                ], 400);
+            }
+
+             $transfer = TransferTransaction::create([
+                'user_id' => $user->id,
+                'recipient_id' => $request->recipient_id,
+                'amount' => $request->amount,
+            ]);
+            DB::commit();
+            return response()->json($transfer);
+        } catch (\Throwable $th) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan sistem'
+            ], 500);
+        }
     }
 
     public function transactionHistory()

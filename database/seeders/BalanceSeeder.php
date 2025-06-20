@@ -12,13 +12,13 @@ class BalanceSeeder extends Seeder
      */
     public function run(): void
     {
-        \App\Models\Balance::create(
-            [
-                'user_id' => 1,
+        for ($i = 1; $i <= 5; $i++) {
+            \App\Models\Balance::create([
+                'user_id' => $i,
                 'current_balance' => 1000000,
                 'created_at' => now(),
                 'updated_at' => now(),
-            ]
-        );
+            ]);
+        }
     }
 }

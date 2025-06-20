@@ -1,6 +1,5 @@
 <script setup>
 import { ref } from 'vue';
-import ApplicationLogo from '@/Components/ApplicationLogo.vue';
 import Dropdown from '@/Components/Dropdown.vue';
 import DropdownLink from '@/Components/DropdownLink.vue';
 import NavLink from '@/Components/NavLink.vue';
@@ -24,6 +23,7 @@ const showingNavigationDropdown = ref(false);
                                     <!-- <ApplicationLogo
                                         class="block h-9 w-auto fill-current text-gray-800"
                                     /> -->
+
                                     <img
                                         src="../../../public/assets/img/Taruma_banking_logo.png"
                                         alt="Taruma Banking Logo"
@@ -160,6 +160,13 @@ const showingNavigationDropdown = ref(false);
                             Dashboard
                         </ResponsiveNavLink>
                     </div>
+
+                    <ResponsiveNavLink
+                        :href="route('m-payment.index')"
+                        :active="route().current('m-payment.index')"
+                    >
+                        M-Payment
+                    </ResponsiveNavLink>
 
                     <!-- Responsive Settings Options -->
                     <div class="border-t border-gray-200 pb-1 pt-4">

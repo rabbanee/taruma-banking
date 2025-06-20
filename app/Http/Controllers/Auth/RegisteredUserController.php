@@ -40,8 +40,14 @@ class RegisteredUserController extends Controller
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'account_number' => (string) rand(1, 9) . substr(str_shuffle("0123456789"), 0, 9),
         ]);
 
+        $user->balance()->create(
+            [
+                'current_balance' => 0
+            ]
+        );
         event(new Registered($user));
 
         Auth::login($user);

@@ -13,14 +13,6 @@ class UserSeeder extends Seeder
      */
     public function run(): void
     {
-        // \App\Models\User::create([
-        //     'name' => 'Daffa Hanif Rabbanee',
-        //     'email' => 'daffarabbanee@gmail.com',
-        //     'password' => Hash::make('Daffa321'),
-        //     'account_number' => substr(str_shuffle("0123456789"), 0, 10),
-        //     'created_at' => now(),
-        //     'updated_at' => now(),
-        // ]);
         collect([
             'Daffa Hanif Rabbanee',
             'Adzra Pravitadewa Firjatulah',

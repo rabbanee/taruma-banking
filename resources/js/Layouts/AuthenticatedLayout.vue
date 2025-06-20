@@ -48,9 +48,15 @@ const showingNavigationDropdown = ref(false);
                                 </NavLink>
                                 <NavLink
                                     :href="route('m-payment.index')"
-                                    :active="route().current('m-payment.index')"
+                                    :active="route().current('MyBalance')"
                                 >
                                     M-Payment
+                                </NavLink>
+                                <NavLink
+                                    :href="route('my-balance')"
+                                    :active="route().current('my-balance')"
+                                >
+                                    M-Info
                                 </NavLink>
                             </div>
                         </div>

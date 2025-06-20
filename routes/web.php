@@ -7,10 +7,8 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 use App\Http\Controllers\MobilePaymentController;
-use App\Http\Controllers\PaymentController;
 use App\Models\EWalletTransaction;
 use App\Http\Controllers\EWalletTransactionController;
-use App\Http\Controllers\BeneficiaryController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -59,6 +57,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/transfer/beneficiary', [MobilePaymentController::class, 'addBeneficiary'])->name('transfer.beneficiary');
         Route::post('/transfer/store', [MobilePaymentController::class, 'storeTransfer'])->name('transfer.store');
 
+
     });
 
 });
@@ -69,6 +68,26 @@ Route::middleware(['auth'])->group(function () {
 
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/my-balance/mutation', [MutationController::class, 'index'])->name('mutation.index');
+    Route::prefix('mtransfer')->group(function () {
+        Route::get('/', [MobilePaymentController::class, 'menu'])->name('mtransfer.menu');
+        Route::get('/daftar-rekening', [MobilePaymentController::class, 'daftarRekening'])->name('mtransfer.daftar');
+        Route::get('/transfer', [MobilePaymentController::class, 'transfer'])->name('mtransfer.transfer');
+        Route::get('/recipients', [MobilePaymentController::class, 'getRecipients']);
+        Route::get('/history', [MobilePaymentController::class, 'transactionHistory']);
+        Route::post('/recipients', [MobilePaymentController::class, 'storeRecipient']);
+        Route::post('/send', [MobilePaymentController::class, 'makeTransfer']);
+        Route::delete('/recipients/{id}', [MobilePaymentController::class, 'deleteRecipient']);
+
+        // Antar Bank
+        Route::get('/daftar-bank', fn() => Inertia::render('Mpayment/DaftarBank'));
+        Route::get('/transfer-antar-bank', fn() => Inertia::render('Mpayment/TransferAntarBank'));
+
+        Route::get('/bank-recipients', [MobilePaymentController::class, 'getBankRecipients']);
+        Route::post('/bank-recipients', [MobilePaymentController::class, 'storeBankRecipient']);
+        Route::post('/interbank-transfer', [MobilePaymentController::class, 'makeInterbankTransfer']);
+        Route::get('/interbank-history', [MobilePaymentController::class, 'interbankHistory']);
+    });
+
 });
 
 Route::middleware('auth')->group(function () {
@@ -77,17 +96,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Route::get('/m-payment/ewallet', function () {
-//     $recentEwalletTransactions = EWalletTransaction::where('user_id', auth()->id())
-//         ->latest()
-//         ->take(5)
-//         ->get();
-
-//     return Inertia::render('Mpayment/Ewallet', [
-//         'user' => auth()->user(),
-//         'recentTransactions' => $recentEwalletTransactions,
-//     ]);
-// })->middleware('auth');
 
 Route::post('/e-wallet/transfer', [EWalletTransactionController::class, 'store'])->name('ewallet.transfer');
 

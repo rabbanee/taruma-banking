@@ -9,6 +9,10 @@ use App\Models\Beneficiary;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use App\Models\TransferTransaction;
+use App\Models\InterbankTransaction;
+Use App\Models\BankRecipient;
+use Illuminate\Support\Facades\Log;
 
 class MobilePaymentController extends Controller
 {
@@ -441,53 +445,180 @@ class MobilePaymentController extends Controller
     // Akhir dari PDAM (Air)
 
     // Halaman Tf (World)
+    // public function transfer()
+    // {
+    //     $user = Auth::user();
+
+    //     return Inertia::render('Mpayment/Transfer', [
+    //         'user' => $user,
+    //         'beneficiaries' => $user->beneficiaries,
+    //         'recentTransfers' => Transfer::with('beneficiary')
+    //             ->where('user_id', $user->id)
+    //             ->latest()
+    //             ->take(5)
+    //             ->get()
+    //     ]);
+    // }
+
+    // public function addBeneficiary(Request $request)
+    // {
+    //     $validated = $request->validate([
+    //         'account_name' => 'required|string',
+    //         'bank_name' => 'required|string',
+    //         'account_number' => 'required|string',
+    //     ]);
+
+    //     $beneficiary = Beneficiary::create([
+    //         'user_id' => Auth::id(),
+    //         ...$validated
+    //     ]);
+
+    //     return response()->json(['message' => 'Rekening berhasil disimpan.', 'beneficiary' => $beneficiary]);
+    // }
+
+    public function storeTransfer(Request $request)
+    {
+        $validated = $request->validate([
+            'beneficiary_id' => 'required|exists:beneficiaries,id',
+            'amount' => 'required|numeric|min:1',
+        ]);
+
+        $transfer = Transfer::create([
+            'user_id' => Auth::id(),
+            'beneficiary_id' => $validated['beneficiary_id'],
+            'amount' => $validated['amount'],
+            'transferred_at' => now(),
+        ]);
+
+        return response()->json(['message' => 'Transfer berhasil.', 'transfer' => $transfer]);
+    }
+    //  Halaman Transfer (Pascabayar)
+    public function menu()
+    {
+        return Inertia::render('Mpayment/Menu');
+    }
+
+    public function daftarRekening()
+    {
+        return Inertia::render('Mpayment/DaftarRekening');
+    }
+
     public function transfer()
-{
-    $user = Auth::user();
+    {
+        return Inertia::render('Mpayment/Transfer');
+    }
 
-    return Inertia::render('Mpayment/Transfer', [
-        'user' => $user,
-        'beneficiaries' => $user->beneficiaries,
-        'recentTransfers' => Transfer::with('beneficiary')
-            ->where('user_id', $user->id)
+    public function getRecipients()
+    {
+        return response()->json(Auth::user()->transferRecipients);
+    }
+
+    public function storeRecipient(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'account_number' => 'required|digits_between:1,10|regex:/^\d+$/|unique:transfer_recipients,account_number',
+        ]);
+
+        $recipient = Auth::user()->transferRecipients()->create([
+            'name' => $request->name,
+            'account_number' => $request->account_number,
+        ]);
+
+        return response()->json($recipient);
+    }
+
+    public function makeTransfer(Request $request)
+    {
+        $request->validate([
+            'recipient_id' => 'required|exists:transfer_recipients,id',
+            'amount' => 'required|numeric|min:1000',
+        ]);
+
+        $transfer = TransferTransaction::create([
+            'user_id' => auth()->id(),
+            'recipient_id' => $request->recipient_id,
+            'amount' => $request->amount,
+        ]);
+
+        return response()->json($transfer);
+    }
+
+    public function transactionHistory()
+    {
+        $history = TransferTransaction::with('recipient')
+            ->where('user_id', auth()->id())
             ->latest()
-            ->take(5)
-            ->get()
-    ]);
-}
+            ->get();
 
-public function addBeneficiary(Request $request)
-{
-    $validated = $request->validate([
-        'account_name' => 'required|string',
-        'bank_name' => 'required|string',
-        'account_number' => 'required|string',
-    ]);
+        return response()->json($history);
+    }
 
-    $beneficiary = Beneficiary::create([
-        'user_id' => Auth::id(),
-        ...$validated
-    ]);
+    public function deleteRecipient($id)
+    {
+        $recipient = auth()->user()->transferRecipients()->findOrFail($id);
+        $recipient->delete();
 
-    return response()->json(['message' => 'Rekening berhasil disimpan.', 'beneficiary' => $beneficiary]);
-}
+        return response()->json(['message' => 'Berhasil dihapus']);
+    }
 
-public function storeTransfer(Request $request)
-{
-    $validated = $request->validate([
-        'beneficiary_id' => 'required|exists:beneficiaries,id',
-        'amount' => 'required|numeric|min:1',
-    ]);
+    public function storeBankRecipient(Request $request)
+    {
+        $request->validate([
+            'bank_name' => 'required|string',
+            'account_name' => 'required|string',
+            'account_number' => 'required|string|max:20',
+        ]);
 
-    $transfer = Transfer::create([
-        'user_id' => Auth::id(),
-        'beneficiary_id' => $validated['beneficiary_id'],
-        'amount' => $validated['amount'],
-        'transferred_at' => now(),
-    ]);
+        return Auth::user()->bankRecipients()->create($request->all());
+    }
 
-    return response()->json(['message' => 'Transfer berhasil.', 'transfer' => $transfer]);
-}
+    public function interbankHistory()
+    {
+        $history = InterbankTransaction::with('bankRecipient')
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
+
+        return response()->json($history);
+    }
+
+
+    public function getBankRecipients()
+    {
+        return response()->json(Auth::user()->bankRecipients);
+    }
+
+    public function makeInterbankTransfer(Request $request)
+    {
+        try {
+            $request->validate([
+                'bank_recipient_id' => 'required|exists:bank_recipients,id',
+                'amount' => 'required|numeric|min:10000',
+            ]);
+
+            $recipient = BankRecipient::findOrFail($request->bank_recipient_id);
+
+            $bank_name = trim($recipient->bank_name);
+            $fee = strcasecmp($bank_name, 'Taruma Bank') === 0
+            ? 0
+                : round($request->amount * 0.03);
+
+
+            $transfer = InterbankTransaction::create([
+                'user_id' => auth()->id(),
+                'bank_recipient_id' => $recipient->id,
+                'amount' => $request->amount,
+                'admin_fee' => $fee,
+            ]);
+
+            return response()->json(['transfer' => $transfer, 'fee' => $fee]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
 
 
 }

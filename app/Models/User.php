@@ -52,4 +52,25 @@ class User extends Authenticatable
         return $this->hasOne(Balance::class);
     }
 
+    // Antar Bank
+    public function transferRecipients()
+    {
+        return $this->hasMany(\App\Models\TransferRecipient::class);
+    }
+
+    public function transferTransactions()
+    {
+        return $this->hasMany(\App\Models\TransferTransaction::class);
+    }
+
+    // Beda bank
+    public function bankRecipients()
+    {
+        return $this->hasMany(BankRecipient::class);
+    }
+
+    public function interbankTransactions()
+    {
+        return $this->hasMany(InterbankTransaction::class);
+    }
 }

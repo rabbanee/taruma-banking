@@ -277,7 +277,6 @@ onMounted(() => {
 <template>
     <AuthenticatedLayout>
         <Head title="Pembayaran PDAM - M-Payment" />
-
         <div class="min-h-screen bg-gray-50 p-6">
             <div class="mx-auto max-w-md">
                 <div class="mb-6 text-center">

@@ -8,8 +8,7 @@ use App\Http\Controllers\MobilePaymentController;
 use App\Http\Controllers\PaymentController;
 use App\Models\EWalletTransaction;
 use App\Http\Controllers\EWalletTransactionController;
-
-
+use App\Http\Controllers\BeneficiaryController;
 
 Route::get('/', function () {
     return Inertia::render('Welcome', [
@@ -29,12 +28,12 @@ Route::get('/m-payment', function () {
 })->middleware(['auth', 'verified'])->name('m-payment.index');
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    
+
     Route::prefix('m-payment')->name('m-payment.')->group(function () {
         // Route PLN
         Route::get('/pln', [MobilePaymentController::class, 'pln'])->name('pln');
         Route::post('/pln/purchase', [MobilePaymentController::class, 'purchasePln'])->name('pln.purchase');
-        
+
         // Route PDAM (Air)
         Route::get('/air', [MobilePaymentController::class, 'air'])->name('air');
         Route::post('/air/purchase', [MobilePaymentController::class, 'purchaseAir'])->name('air.purchase');
@@ -42,8 +41,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Route E-Wallet
         Route::get('/ewallet', function () {
-        return Inertia::render('Mpayment/Ewallet');
+            return Inertia::render('Mpayment/Ewallet');
         })->name('ewallet');
+        // Route Transfer
+        Route::get('/transfer', [MobilePaymentController::class, 'transfer'])->name('transfer');
+        Route::post('/transfer/beneficiary', [MobilePaymentController::class, 'addBeneficiary'])->name('transfer.beneficiary');
+        Route::post('/transfer/store', [MobilePaymentController::class, 'storeTransfer'])->name('transfer.store');
 
     });
 

@@ -10,12 +10,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::get('/m-payment/pln/history', [MobilePaymentController::class, 'plnHistory']);
     Route::get('/e-wallet/history', [EWalletTransactionController::class, 'history']);
     Route::get('/e-wallet/{id}', [EWalletTransactionController::class, 'show']);
+    Route::get('/m-payment/air', [MobilePaymentController::class, 'airApi']);
+    // Route::post('/lookup-account', [BankTransferController::class, 'lookupAccount'])->name('api.lookupAccount');
+
+
 });
 
 Route::middleware(['auth'])->group(function () {
     Route::post('/pln/purchase', [MobilePaymentController::class, 'purchasePln']);
 });
-
-
-
-

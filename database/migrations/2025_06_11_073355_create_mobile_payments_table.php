@@ -13,18 +13,31 @@ return new class extends Migration
     {
         Schema::create('mobile_payments', function (Blueprint $table) {
             $table->id();
+            // Identitas user
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('payment_type');
-            $table->string('transaction_id')->nullable();
-            $table->string('customer_number')->nullable();
-            $table->decimal('amount', 12, 2);
-            $table->string('status')->default('pending');
-            $table->json('metadata')->nullable();
-            $table->string('pln_token_1')->nullable();
-            $table->string('kwh_amount')->nullable();
-            $table->text('error_message')->nullable();
-            $table->timestamp('paid_at')->nullable();
-            $table->timestamps();
+
+            // Informasi transaksi
+            $table->string('transaction_id')->unique()->nullable(); // ID transaksi global
+            $table->string('payment_type');                          // Jenis: PLN, Pulsa, dll
+            $table->string('customer_number')->nullable();           // No pelanggan (umum)
+            $table->string('token_number', 12)->nullable();          // Token PLN (khusus)
+            $table->decimal('amount', 12, 2);                        // Nominal pembayaran
+
+            // Detail PLN (opsional)
+            $table->string('pln_token_1', 20)->nullable();           // Token 1
+            $table->decimal('kwh_amount', 8, 2)->nullable();         // KWh yang dibeli
+
+            // Status & kontrol
+            $table->string('status')->default('pending');           // Status pembayaran
+            $table->timestamp('paid_at')->nullable();               // Kapan dibayar
+            $table->text('error_message')->nullable();              // Error jika gagal
+
+            // Metadata & admin
+            $table->json('metadata')->nullable();                   // Info tambahan
+            $table->timestamps();                                   // created_at & updated_at
+
+            // Index untuk efisiensi query kombinasi
+            $table->index(['user_id', 'payment_type']);
         });
 
     }
